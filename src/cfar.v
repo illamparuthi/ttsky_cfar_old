@@ -7,17 +7,19 @@ module cfar (
 
 reg [7:0] noise_level;
 
-always @(posedge clk) begin
-
-    // simple running noise estimate
-    noise_level <= (noise_level + sample_in) >> 1;
-
-    // CFAR rule
-    if(sample_in > (noise_level << 2))   // spike detection
-        detect <= 1;
-    else
+always @(posedge clk or posedge rst) begin
+    if (rst) begin
+        noise_level <= 8'd10;
         detect <= 0;
+    end
+    else begin
+        noise_level <= (noise_level + sample_in) >> 1;
 
+        if(sample_in > (noise_level << 2))
+            detect <= 1;
+        else
+            detect <= 0;
+    end
 end
 
 endmodule
