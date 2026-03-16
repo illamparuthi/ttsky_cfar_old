@@ -5,35 +5,19 @@ module cfar (
     output reg detect
 );
 
-reg [7:0] prev1, prev2, prev3, prev4;
-reg [9:0] noise_avg;
+reg [7:0] noise_level;
 
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
-        prev1 <= 0;
-        prev2 <= 0;
-        prev3 <= 0;
-        prev4 <= 0;
+always @(posedge clk) begin
+
+    // simple running noise estimate
+    noise_level <= (noise_level + sample_in) >> 1;
+
+    // CFAR rule
+    if(sample_in > (noise_level << 2))   // spike detection
+        detect <= 1;
+    else
         detect <= 0;
-    end
-    else begin
 
-        // compute average noise
-        noise_avg = (prev1 + prev2 + prev3 + prev4) >> 2;
-
-        // CFAR detection rule
-        if(sample_in > (noise_avg << 1))
-            detect <= 1;
-        else
-            detect <= 0;
-
-        // shift register
-        prev4 <= prev3;
-        prev3 <= prev2;
-        prev2 <= prev1;
-        prev1 <= sample_in;
-
-    end
 end
 
 endmodule
