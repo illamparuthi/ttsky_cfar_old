@@ -5,39 +5,33 @@ module cfar (
     output reg detect
 );
 
-parameter THRESHOLD_FACTOR = 2;
-
-reg [7:0] window [0:7];
-integer i;
-
-reg [15:0] noise_sum;
-reg [7:0] threshold;
+reg [7:0] prev1, prev2, prev3, prev4;
+reg [9:0] noise_avg;
 
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        for(i=0;i<8;i=i+1)
-            window[i] <= 0;
+        prev1 <= 0;
+        prev2 <= 0;
+        prev3 <= 0;
+        prev4 <= 0;
         detect <= 0;
     end
     else begin
 
-        // shift history
-        for(i=7;i>0;i=i-1)
-            window[i] <= window[i-1];
+        // compute average noise
+        noise_avg = (prev1 + prev2 + prev3 + prev4) >> 2;
 
-        window[0] <= sample_in;
-
-        // estimate noise from previous samples
-        noise_sum = window[1] + window[2] + window[3] + window[4] +
-                    window[5] + window[6] + window[7];
-
-        threshold = (noise_sum >> 3) * THRESHOLD_FACTOR;
-
-        // current sample is CUT
-        if(sample_in > threshold)
+        // CFAR detection rule
+        if(sample_in > (noise_avg << 1))
             detect <= 1;
         else
             detect <= 0;
+
+        // shift register
+        prev4 <= prev3;
+        prev3 <= prev2;
+        prev2 <= prev1;
+        prev1 <= sample_in;
 
     end
 end
