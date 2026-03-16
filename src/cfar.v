@@ -1,24 +1,22 @@
-module cfar (
-    input clk,
-    input rst,
-    input [7:0] sample_in,
-    output reg detect
-);
+`default_nettype none
 
-reg [7:0] noise_level;
+module cfar (
+    input  wire       clk,
+    input  wire       rst,
+    input  wire [7:0] sample_in,
+    output reg        detect
+);
 
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        noise_level <= 8'd10;
-        detect <= 0;
+        detect <= 1'b0;
     end
     else begin
-        noise_level <= (noise_level + sample_in) >> 1;
-
-        if(sample_in > (noise_level << 2))
-            detect <= 1;
+        // Simple spike detector (CFAR approximation)
+        if (sample_in > 8'd100)
+            detect <= 1'b1;
         else
-            detect <= 0;
+            detect <= 1'b0;
     end
 end
 
