@@ -18,6 +18,7 @@ module tt_um_ttsky_cfar (
 wire detect;
 wire buzzer;
 
+// CFAR detector
 cfar cfar_inst (
     .clk(clk),
     .rst(~rst_n),
@@ -25,8 +26,10 @@ cfar cfar_inst (
     .detect(detect)
 );
 
+// Buzzer controller
 buzzer buzzer_inst (
     .clk(clk),
+    .rst(~rst_n),   // <-- important fix
     .detect(detect),
     .buzzer_out(buzzer)
 );
