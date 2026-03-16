@@ -1,23 +1,19 @@
 `default_nettype none
 
 module cfar (
-    input  wire       clk,
-    input  wire       rst,
-    input  wire [7:0] sample_in,
-    output reg        detect
+    input wire clk,
+    input wire rst_n,
+    input wire [7:0] sample_in,
+    output reg detect
 );
 
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n)
         detect <= 1'b0;
-    end
-    else begin
-        // spike detection
-        if (sample_in > 8'd50)
-            detect <= 1'b1;
-        else
-            detect <= 1'b0;
-    end
+    else if (sample_in > 8'd50)
+        detect <= 1'b1;
+    else
+        detect <= 1'b0;
 end
 
 endmodule
