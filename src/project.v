@@ -21,11 +21,10 @@ wire buzzer;
 // CFAR detector
 cfar cfar_inst (
     .clk(clk),
-    .rst(~rst_n),
+    .rst_n(rst_n),
     .sample_in(ui_in),
     .detect(detect)
 );
-
 // Buzzer controller
 buzzer buzzer_inst (
     .clk(clk),
