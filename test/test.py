@@ -22,20 +22,21 @@ async def test_project(dut):
 
     dut.rst_n.value = 1
 
-    # Radar samples
     samples = [10,11,9,10,12,11,10,200,11,10]
 
     detected = False
 
-    # Feed samples
+    # ✅ CHECK DURING INPUT STREAM
     for s in samples:
         dut.ui_in.value = s
         await RisingEdge(dut.clk)
 
-    # Wait enough cycles for pipeline
-    for _ in range(20):
-        await RisingEdge(dut.clk)
+        if dut.uo_out.value[0] == 1:
+            detected = True
 
+    # Extra cycles (optional safety)
+    for _ in range(10):
+        await RisingEdge(dut.clk)
         if dut.uo_out.value[0] == 1:
             detected = True
 
