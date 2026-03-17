@@ -1,49 +1,44 @@
-# Tiny Tapeout project information
-
 project:
-  title: "CFAR Radar Detector with Audio Alert"
-  author: "Illamparuthi"
-  discord: ""
-  description: "CA-CFAR radar detector with buzzer feedback for radar target detection"
-  language: "Verilog"
-  clock_hz: 10000000
-  tiles: "1x1"
+title: "CFAR Radar Detector"
+author: "Illamparuthi"
+discord: ""
+description: "Simple CFAR-like spike detector for radar signal detection"
+language: "Verilog"
+clock_hz: 10000000
+tiles: "1x1"
 
-  # Top module name
-  top_module: "tt_um_ttsky_cfar"
+top_module: "tt_um_ttsky_cfar"
 
-  # RTL source files
-  source_files:
-    - "project.v"
-    - "cfar.v"
-    - "buzzer.v"
+source_files:
+- "project.v"
+- "cfar.v"
 
 pinout:
-  ui[0]: "Radar sample bit0"
-  ui[1]: "Radar sample bit1"
-  ui[2]: "Radar sample bit2"
-  ui[3]: "Radar sample bit3"
-  ui[4]: "Radar sample bit4"
-  ui[5]: "Radar sample bit5"
-  ui[6]: "Radar sample bit6"
-  ui[7]: "Radar sample bit7"
+ui[0]: "Radar sample bit0"
+ui[1]: "Radar sample bit1"
+ui[2]: "Radar sample bit2"
+ui[3]: "Radar sample bit3"
+ui[4]: "Radar sample bit4"
+ui[5]: "Radar sample bit5"
+ui[6]: "Radar sample bit6"
+ui[7]: "Radar sample bit7"
 
-  uo[0]: "CFAR detection output"
-  uo[1]: "Buzzer output"
-  uo[2]: ""
-  uo[3]: ""
-  uo[4]: ""
-  uo[5]: ""
-  uo[6]: ""
-  uo[7]: ""
+uo[0]: "Detection output"
+uo[1]: ""
+uo[2]: ""
+uo[3]: ""
+uo[4]: ""
+uo[5]: ""
+uo[6]: ""
+uo[7]: ""
 
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
-  uio[4]: ""
-  uio[5]: ""
-  uio[6]: ""
-  uio[7]: ""
+uio[0]: ""
+uio[1]: ""
+uio[2]: ""
+uio[3]: ""
+uio[4]: ""
+uio[5]: ""
+uio[6]: ""
+uio[7]: ""
 
 yaml_version: 6
