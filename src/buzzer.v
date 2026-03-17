@@ -1,6 +1,6 @@
 `default_nettype none
-
 `default_nettype wire
+
 
 module buzzer (
 input  wire clk,
