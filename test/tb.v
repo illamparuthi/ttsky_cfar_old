@@ -1,33 +1,29 @@
 `default_nettype none
-`timescale 1ns / 1ps
+`timescale 1ns/1ps
 
-module tb ();
+module tb;
 
-  // waveform dump
-  initial begin
+initial begin
     $dumpfile("tb.fst");
     $dumpvars(0, tb);
-  end
+end
 
-  // Inputs
-  reg clk;
-  reg rst_n;
-  reg ena;
-  reg [7:0] ui_in;
-  reg [7:0] uio_in;
+reg clk;
+reg rst_n;
+reg ena;
+reg [7:0] ui_in;
+reg [7:0] uio_in;
 
-  // Outputs
-  wire [7:0] uo_out;
-  wire [7:0] uio_out;
-  wire [7:0] uio_oe;
+wire [7:0] uo_out;
+wire [7:0] uio_out;
+wire [7:0] uio_oe;
 
 `ifdef GL_TEST
-  wire VPWR = 1'b1;
-  wire VGND = 1'b0;
+wire VPWR = 1'b1;
+wire VGND = 1'b0;
 `endif
 
-  // DUT
-  tt_um_ttsky_cfar user_project (
+tt_um_ttsky_cfar dut (
 
 `ifdef GL_TEST
     .VPWR(VPWR),
@@ -42,6 +38,6 @@ module tb ();
     .ena(ena),
     .clk(clk),
     .rst_n(rst_n)
-  );
+);
 
 endmodule
