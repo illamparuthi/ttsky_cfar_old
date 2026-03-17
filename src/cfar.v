@@ -9,26 +9,22 @@ module cfar (
 );
 
 // Shift registers
-reg [7:0] w0, w1, w2, w3, w4, w5, w6, w7;
-
-// CUT
-reg [7:0] cut;
+reg [7:0] w0, w1, w2, w3, w4, w5;
 
 // internal
 reg [15:0] sum;
 reg [7:0] avg;
 reg [8:0] threshold;
+reg [7:0] cut;
 
 // ─────────────────────────
-// Shift register
+// Shift register (smaller window)
 // ─────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        w0 <= 0; w1 <= 0; w2 <= 0; w3 <= 0;
-        w4 <= 0; w5 <= 0; w6 <= 0; w7 <= 0;
+        w0 <= 0; w1 <= 0; w2 <= 0;
+        w3 <= 0; w4 <= 0; w5 <= 0;
     end else if (valid_in) begin
-        w7 <= w6;
-        w6 <= w5;
         w5 <= w4;
         w4 <= w3;
         w3 <= w2;
@@ -39,7 +35,7 @@ always @(posedge clk or posedge rst) begin
 end
 
 // ─────────────────────────
-// CFAR logic with GUARD CELLS
+// CFAR logic (fast + sensitive)
 // ─────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
@@ -49,18 +45,17 @@ always @(posedge clk or posedge rst) begin
         cut       <= 0;
     end else if (valid_in) begin
 
-        // CUT
-        cut <= w4;
+        // CUT = center
+        cut <= w3;
 
-        // TRAINING CELLS ONLY (exclude guard cells)
-        // Guard = w3, w5
-        sum = w0 + w1 + w2 + w6 + w7;
+        // training cells (exclude neighbors)
+        sum = w0 + w1 + w5;
 
-        // avg = sum / 5
-        avg <= sum / 5;
+        // avg
+        avg <= sum / 3;
 
-        // threshold (slightly relaxed)
-        threshold <= {1'b0, avg} + ({1'b0, avg} >> 1);
+        // VERY IMPORTANT: low threshold
+        threshold <= avg + (avg >> 2); // 1.25x
 
         // detection
         detect <= ({1'b0, cut} > threshold);
