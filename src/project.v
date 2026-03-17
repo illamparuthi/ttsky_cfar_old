@@ -19,11 +19,13 @@ wire rst = ~rst_n;
 // Always valid (since TT feeds continuously)
 wire valid = 1'b1;
 
+wire _unused = &{uio_in};  // keep linter happy
+
 cfar cfar_inst (
     .clk(clk),
-    .rst(rst),
+    .rst(~rst_n),
     .data_in(ui_in),
-    .valid_in(valid),
+    .valid_in(ena),
     .detect(detect)
 );
 
