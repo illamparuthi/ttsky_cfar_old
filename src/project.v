@@ -1,5 +1,5 @@
 `default_nettype none
-`default_nettype wire
+
 module tt_um_ttsky_cfar (
     input  wire [7:0] ui_in,
     output wire [7:0] uo_out,
@@ -13,18 +13,26 @@ module tt_um_ttsky_cfar (
 
 wire detect;
 
+// Convert active-low reset → active-high
+wire rst = ~rst_n;
+
+// Always valid (since TT feeds continuously)
+wire valid = 1'b1;
+
 cfar cfar_inst (
     .clk(clk),
-    .rst_n(rst_n),
-    .sample_in(ui_in),
+    .rst(rst),
+    .data_in(ui_in),
+    .valid_in(valid),
     .detect(detect)
 );
 
+// Output mapping
 assign uo_out[0] = detect;
 assign uo_out[7:1] = 7'b0;
 
+// No bidirectional IO used
 assign uio_out = 8'b0;
 assign uio_oe  = 8'b0;
 
 endmodule
-
