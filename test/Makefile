@@ -1,12 +1,13 @@
 # Makefile
-# Cocotb simulation Makefile for TinyTapeout CFAR + Buzzer project
+# Cocotb simulation Makefile for TinyTapeout CFAR (NO BUZZER)
 
 SIM          ?= icarus
 TOPLEVEL_LANG ?= verilog
 
 SRC_DIR = $(PWD)/../src
 
-PROJECT_SOURCES = project.v cfar.v buzzer.v
+# Removed buzzer.v
+PROJECT_SOURCES = project.v cfar.v
 
 ifneq ($(GATES),yes)
 
@@ -29,7 +30,7 @@ COMPILE_ARGS    += -DUNIT_DELAY=\#1
 VERILOG_SOURCES += $(PDK_ROOT)/sky130A/libs.ref/sky130_fd_sc_hd/verilog/primitives.v
 VERILOG_SOURCES += $(PDK_ROOT)/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v
 
-# CI copies the netlist to this exact path (cp tt_submission/*.v test/gate_level_netlist.v)
+# Gate-level netlist
 VERILOG_SOURCES += $(PWD)/gate_level_netlist.v
 
 TOPLEVEL         = tt_um_ttsky_cfar
@@ -38,7 +39,7 @@ endif
 
 COMPILE_ARGS    += -I$(SRC_DIR)
 
-# Python test module (filename without .py)
+# Python test module
 MODULE           = test
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
