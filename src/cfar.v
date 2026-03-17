@@ -1,3 +1,4 @@
+
 `default_nettype none
 
 module cfar (
@@ -8,22 +9,20 @@ module cfar (
     output reg         detect
 );
 
-// ─────────────────────────────────────────
-// Shift register (manual, no arrays)
-// ─────────────────────────────────────────
+// Shift registers
 reg [7:0] w0, w1, w2, w3, w4, w5, w6, w7;
 
-// CUT (center cell)
+// Pipeline registers
 reg [7:0] cut;
+reg [7:0] avg;
+reg [8:0] threshold;
 
-// CFAR internal signals
+// temp
 reg [15:0] sum;
-reg [7:0]  avg;
-reg [8:0]  threshold;
 
-// ─────────────────────────────────────────
-// Shift logic
-// ─────────────────────────────────────────
+// ─────────────────────────
+// Shift register
+// ─────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
         w0 <= 0; w1 <= 0; w2 <= 0; w3 <= 0;
@@ -40,34 +39,30 @@ always @(posedge clk or posedge rst) begin
     end
 end
 
-// ─────────────────────────────────────────
-// Combinational sum (exclude CUT = w4)
-// ─────────────────────────────────────────
-always @(*) begin
-    sum = w0 + w1 + w2 + w3 + w5 + w6 + w7;
-end
-
-// ─────────────────────────────────────────
-// CFAR logic
-// ─────────────────────────────────────────
+// ─────────────────────────
+// CFAR pipeline (aligned)
+// ─────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
+        cut       <= 0;
         avg       <= 0;
         threshold <= 0;
         detect    <= 0;
-        cut       <= 0;
     end else if (valid_in) begin
 
-        // Select CUT (center of window)
-        cut <= w4;
+        // Step 1: compute sum from OLD window
+        sum = w0 + w1 + w2 + w3 + w5 + w6 + w7;
 
-        // Average (divide by 8 → shift)
+        // Step 2: compute avg
         avg <= sum[15:3];
 
-        // Threshold = 1.5 × avg
+        // Step 3: threshold
         threshold <= {1'b0, avg} + ({1'b0, avg} >> 1);
 
-        // Detection
+        // Step 4: CUT (same cycle reference)
+        cut <= w4;
+
+        // Step 5: detection using PREVIOUS stable values
         detect <= ({1'b0, cut} > threshold);
     end
 end
