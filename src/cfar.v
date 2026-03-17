@@ -41,11 +41,16 @@ wire [7:0] avg = sum >> 3;
 wire [7:0] threshold = avg << 1;
 
 // Comparator (registered output)
+reg [7:0] threshold_reg;
+
 always @(posedge clk or negedge rst_n) begin
-    if(!rst_n)
+    if(!rst_n) begin
+        threshold_reg <= 0;
         detect <= 0;
-    else
-        detect <= (w5 > threshold);
+    end else begin
+        threshold_reg <= threshold;   // register threshold
+        detect <= (w5 > threshold_reg); // compare with stable value
+    end
 end
 
 endmodule
