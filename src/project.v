@@ -9,11 +9,11 @@ input  wire rst_n,
 input  wire ena
 );
 
-```
+
 wire detect;
 wire buzzer_out;
 
-// CFAR module (FIXED PORT NAMES)
+// CFAR instance
 cfar cfar_inst (
     .clk(clk),
     .rst_n(rst_n),
@@ -21,21 +21,21 @@ cfar cfar_inst (
     .detect(detect)
 );
 
-// Buzzer module (FIXED PORT NAMES)
+// Buzzer instance
 buzzer buzzer_inst (
     .clk(clk),
-    .rst(~rst_n),        // buzzer uses active HIGH reset
+    .rst(~rst_n),
     .detect(detect),
     .buzzer_out(buzzer_out)
 );
 
-// OUTPUT MAPPING
+// Outputs
 assign uo_out[0] = detect;
 assign uo_out[1] = buzzer_out;
-assign uo_out[7:2] = 0;
+assign uo_out[7:2] = 6'b0;
 
-assign uio_out = 0;
-assign uio_oe  = 0;
-```
+assign uio_out = 8'b0;
+assign uio_oe  = 8'b0;
+
 
 endmodule
