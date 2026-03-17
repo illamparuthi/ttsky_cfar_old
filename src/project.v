@@ -18,24 +18,27 @@ module tt_um_ttsky_cfar (
     assign uio_out = 8'b0;
     assign uio_oe  = 8'b0;
 
-    // Avoid unused warnings
-    wire _unused = &{uio_in, ena};
+    // ─────────────────────────
+    // Internal signals
+    // ─────────────────────────
+    wire detect;
+
+    // Always valid (stable for TT + GL)
+    wire valid = 1'b1;
 
     // ─────────────────────────
     // CFAR instance
     // ─────────────────────────
-    wire detect;
-
     cfar cfar_inst (
         .clk      (clk),
-        .rst      (~rst_n),     // convert active-low → active-high
+        .rst      (~rst_n),   // active-low → active-high
         .data_in  (ui_in),
-        .valid_in (1'b1),       // always enabled (GL-safe)
+        .valid_in (valid),
         .detect   (detect)
     );
 
     // ─────────────────────────
-    // Registered output (GL-safe)
+    // Registered output (important for GL)
     // ─────────────────────────
     reg [7:0] uo_out_reg;
 
