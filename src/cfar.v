@@ -31,10 +31,10 @@ always @(posedge clk or negedge rst_n) begin
         w0<=sample_in;
 
         //  DIRECT DETECTION BOOST (fix)
-        if (w5 > 8'd100)   // spike threshold
-            detect <= 1;
-        else
-            detect <= 0;
+        if (w0 > 8'd100 || w1 > 8'd100 || w2 > 8'd100)
+    detect <= 1;
+else
+    detect <= 0;
     end
 end
 
