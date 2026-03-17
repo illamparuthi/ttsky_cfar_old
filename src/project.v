@@ -13,7 +13,6 @@ input  wire ena
 wire detect;
 wire buzzer_out;
 
-// CFAR instance
 cfar cfar_inst (
     .clk(clk),
     .rst_n(rst_n),
@@ -21,15 +20,13 @@ cfar cfar_inst (
     .detect(detect)
 );
 
-// Buzzer instance
 buzzer buzzer_inst (
     .clk(clk),
-    .rst(~rst_n),
+    .rst(~rst_n),        // active-high reset
     .detect(detect),
     .buzzer_out(buzzer_out)
 );
 
-// Outputs
 assign uo_out[0] = detect;
 assign uo_out[1] = buzzer_out;
 assign uo_out[7:2] = 6'b0;
