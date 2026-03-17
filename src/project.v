@@ -13,16 +13,19 @@ input  wire ena
 wire detect;
 wire buzzer_out;
 
+// FIX: ensure input is valid in GL
+wire [7:0] data_in = ena ? ui_in : 8'b0;
+
 cfar cfar_inst (
     .clk(clk),
     .rst_n(rst_n),
-    .sample_in(ui_in),
+    .sample_in(data_in),
     .detect(detect)
 );
 
 buzzer buzzer_inst (
     .clk(clk),
-    .rst(~rst_n),        // active-high reset
+    .rst(~rst_n),
     .detect(detect),
     .buzzer_out(buzzer_out)
 );
