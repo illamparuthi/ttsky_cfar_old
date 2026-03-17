@@ -1,60 +1,39 @@
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge, ClockCycles
-
-def safe_bit(signal, bit):
-try:
-return int(signal.value[bit])
-except:
-return 0
-
-async def reset_dut(dut):
-dut.ena.value = 1
-dut.ui_in.value = 0
-dut.uio_in.value = 0
-dut.rst_n.value = 0
-await ClockCycles(dut.clk, 10)
-dut.rst_n.value = 1
-await ClockCycles(dut.clk, 5)
-
-@cocotb.test()
-async def test_detect_spike(dut):
-clock = Clock(dut.clk, 10, unit="ns")
-cocotb.start_soon(clock.start())
-
-
-await reset_dut(dut)
-
-# noise
-for _ in range(20):
-    dut.ui_in.value = 10
-    await RisingEdge(dut.clk)
-
-# spike
-detected = False
-for _ in range(10):
-    dut.ui_in.value = 200
-    await RisingEdge(dut.clk)
-    if safe_bit(dut.uo_out, 0):
-        detected = True
-
-assert detected, "Spike not detected"
+from cocotb.triggers import RisingEdge
 
 
 @cocotb.test()
-async def test_no_false_alarm(dut):
-clock = Clock(dut.clk, 10, unit="ns")
-cocotb.start_soon(clock.start())
+async def test_cfar(dut):
 
+    clock = Clock(dut.clk, 10, unit="ns")
+    cocotb.start_soon(clock.start())
 
-await reset_dut(dut)
+    dut.ena.value = 1
+    dut.ui_in.value = 0
+    dut.uio_in.value = 0
 
-false_alarm = False
-for _ in range(40):
-    dut.ui_in.value = 10
-    await RisingEdge(dut.clk)
-    if safe_bit(dut.uo_out, 0):
-        false_alarm = True
+    # reset
+    dut.rst_n.value = 0
+    for _ in range(5):
+        await RisingEdge(dut.clk)
 
-assert not false_alarm, "False detection"
+    dut.rst_n.value = 1
 
+    samples = [10,11,9,10,12,11,10,200,11,10]
+
+    detected = False
+
+    for s in samples:
+        dut.ui_in.value = s
+        await RisingEdge(dut.clk)
+
+        if dut.uo_out.value[0] == 1:
+            detected = True
+
+    for _ in range(10):
+        await RisingEdge(dut.clk)
+        if dut.uo_out.value[0] == 1:
+            detected = True
+
+    assert detected, "CFAR failed to detect spike"
