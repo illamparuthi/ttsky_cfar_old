@@ -4,53 +4,35 @@ module tb;
 
 reg clk;
 reg rst_n;
-reg [7:0] sample_in;
-wire detect;
+reg [7:0] ui_in;
+wire [7:0] uo_out;
 
-cfar dut (
-.clk(clk),
-.rst_n(rst_n),
-.sample_in(sample_in),
-.detect(detect)
+tt_um_ttsky_cfar dut (
+    .clk(clk),
+    .rst_n(rst_n),
+    .ui_in(ui_in),
+    .uo_out(uo_out),
+    .uio_in(0),
+    .uio_out(),
+    .uio_oe(),
+    .ena(1)
 );
 
-// clock
+initial clk = 0;
 always #5 clk = ~clk;
 
 initial begin
-$dumpfile("dump.vcd");
-$dumpvars(0, tb);
+    $dumpfile("dump.vcd");
+    $dumpvars(0, tb);
 
+    rst_n = 0;
+    ui_in = 0;
 
-clk = 0;
-rst_n = 0;
-sample_in = 0;
+    #50;
+    rst_n = 1;
 
-#20;
-rst_n = 1;
-
-// noise
-repeat (10) begin
-    sample_in = 10;
-    #10;
-end
-
-// spike
-repeat (5) begin
-    sample_in = 200;
-    #10;
-end
-
-// back to noise
-repeat (10) begin
-    sample_in = 10;
-    #10;
-end
-
-#100;
-$finish;
-
-
+    #500;
+    $finish;
 end
 
 endmodule
