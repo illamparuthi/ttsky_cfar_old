@@ -1,40 +1,39 @@
 `default_nettype none
-
 module tt_um_ttsky_cfar (
     input  wire [7:0] ui_in,
     output wire [7:0] uo_out,
     input  wire [7:0] uio_in,
     output wire [7:0] uio_out,
     output wire [7:0] uio_oe,
-    input  wire clk,
-    input  wire rst_n,
-    input  wire ena
+    input  wire       ena,
+    input  wire       clk,
+    input  wire       rst_n
 );
 
-wire detect;
+  // Tie off unused outputs
+  assign uio_out = 8'b0;
+  assign uio_oe  = 8'b0;
 
-// Convert active-low reset → active-high
-wire rst = ~rst_n;
+  // Internal detect wire
+  wire detect;
 
-// Always valid (since TT feeds continuously)
-wire valid = 1'b1;
+  cfar cfar_inst (
+      .clk      (clk),
+      .rst      (~rst_n),      // ← active-high rst from active-low rst_n
+      .data_in  (ui_in),
+      .valid_in (ena),         // or ui_in[7] or whatever your valid signal is
+      .detect   (detect)
+  );
 
-wire _unused = &{uio_in};  // keep linter happy
+  // Register the output to avoid X propagation
+  reg [7:0] uo_out_reg;
+  always @(posedge clk or negedge rst_n) begin
+      if (!rst_n)
+          uo_out_reg <= 8'b0;   // ← clears X on reset
+      else
+          uo_out_reg <= {7'b0, detect};
+  end
 
-cfar cfar_inst (
-    .clk(clk),
-    .rst(~rst_n),
-    .data_in(ui_in),
-    .valid_in(ena),
-    .detect(detect)
-);
-
-// Output mapping
-assign uo_out[0] = detect;
-assign uo_out[7:1] = 7'b0;
-
-// No bidirectional IO used
-assign uio_out = 8'b0;
-assign uio_oe  = 8'b0;
+  assign uo_out = uo_out_reg;
 
 endmodule
