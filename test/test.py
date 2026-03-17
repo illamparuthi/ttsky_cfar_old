@@ -1,6 +1,7 @@
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
+from cocotb.types import Logic
 
 @cocotb.test()
 async def test_cfar(dut):
@@ -11,37 +12,42 @@ async def test_cfar(dut):
     dut.ui_in.value = 0
     dut.uio_in.value = 0
 
-    # Reset
+    # Reset — hold longer to allow GL flops to initialize
     dut.rst_n.value = 0
-    for _ in range(5):
+    for _ in range(10):          # was 5, increase to 10 to be safe
         await RisingEdge(dut.clk)
     dut.rst_n.value = 1
-    await RisingEdge(dut.clk)  # one clean cycle after reset release
+    await RisingEdge(dut.clk)
 
-    # Enough background + spike to fill any reasonable CFAR window
-    samples = [10, 11, 9, 10, 12, 11, 10,  # background (7 samples)
-               200,                          # spike
-               10, 11, 10, 9, 11, 10, 12]   # trailing background
+    samples = [10, 11, 9, 10, 12, 11, 10,
+               200,
+               10, 11, 10, 9, 11, 10, 12]
 
     detected = False
+
+    def is_detected(signal):
+        """Safely read a signal that may contain X/Z in gate-level sim."""
+        try:
+            return (int(signal.value) & 0x01) == 1
+        except ValueError:
+            # Contains X or Z — not yet valid, treat as 0
+            dut._log.warning(f"uo_out contains X/Z: {signal.value}")
+            return False
 
     for s in samples:
         dut.ui_in.value = s
         await RisingEdge(dut.clk)
-        await Timer(1, unit="ns")   # let combinational outputs settle after clock edge
-        out = int(dut.uo_out.value)
-        dut._log.info(f"input={s:3d}  uo_out=0b{out:08b}")
-        if out & 0x01:
+        await Timer(1, unit="ns")   # let GL outputs settle
+        if is_detected(dut.uo_out):
             detected = True
+            dut._log.info(f"Detection on input={s}")
 
-    # Extra drain cycles in case of pipeline latency
     dut.ui_in.value = 0
     for i in range(20):
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
-        out = int(dut.uo_out.value)
-        dut._log.info(f"drain {i:2d}  uo_out=0b{out:08b}")
-        if out & 0x01:
+        if is_detected(dut.uo_out):
             detected = True
+            dut._log.info(f"Detection on drain cycle {i}")
 
     assert detected, "CFAR failed to detect spike"
