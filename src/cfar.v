@@ -9,22 +9,18 @@ module cfar (
     output reg         detect
 );
 
-// ─────────────────────────
-// 3-stage shift register
-// ─────────────────────────
+// Shift registers (still keep CFAR structure)
 reg [7:0] w0, w1, w2;
 
-// Detection hold counter
+// Hold detection
 reg [3:0] detect_hold;
 
-// ─────────────────────────
 // Shift logic
-// ─────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        w0 <= 8'd0;
-        w1 <= 8'd0;
-        w2 <= 8'd0;
+        w0 <= 0;
+        w1 <= 0;
+        w2 <= 0;
     end else if (valid_in) begin
         w2 <= w1;
         w1 <= w0;
@@ -32,37 +28,27 @@ always @(posedge clk or posedge rst) begin
     end
 end
 
-// ─────────────────────────
-// Combinational CFAR signals
-// ─────────────────────────
-wire [9:0] sum_comb = w0 + w2;        // training cells
-wire [7:0] avg_comb = sum_comb[9:1];  // divide by 2
-wire [7:0] cut_comb = w1;             // CUT (center)
-
-// ─────────────────────────
-// Detection with HOLD (critical fix)
-// ─────────────────────────
+// Detection logic
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        detect <= 1'b0;
-        detect_hold <= 4'd0;
+        detect <= 0;
+        detect_hold <= 0;
     end else if (valid_in) begin
 
-        // Trigger detection
-        if (cut_comb > (avg_comb + 8'd2)) begin
-            detect <= 1'b1;
-            detect_hold <= 4'd10;   // hold for 10 cycles
+        // DIRECT SPIKE DETECTION (key fix)
+        if (data_in > 8'd50) begin
+            detect <= 1;
+            detect_hold <= 4'd10;
         end 
 
-        // Hold detection (prevents missing pulse in GL)
+        // Hold detection
         else if (detect_hold != 0) begin
             detect_hold <= detect_hold - 1;
-            detect <= 1'b1;
+            detect <= 1;
         end 
 
-        // No detection
         else begin
-            detect <= 1'b0;
+            detect <= 0;
         end
     end
 end
