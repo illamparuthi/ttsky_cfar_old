@@ -13,7 +13,7 @@ input  wire ena
 wire detect;
 wire buzzer_out;
 
-// FIX: ensure input is valid in GL
+// IMPORTANT: gate input with ena (GL-safe)
 wire [7:0] data_in = ena ? ui_in : 8'b0;
 
 cfar cfar_inst (
@@ -25,15 +25,17 @@ cfar cfar_inst (
 
 buzzer buzzer_inst (
     .clk(clk),
-    .rst(~rst_n),
-    .detect(detect),
-    .buzzer_out(buzzer_out)
+    .rst_n(rst_n),
+    .trigger(detect),
+    .out(buzzer_out)
 );
 
+// Outputs
 assign uo_out[0] = detect;
 assign uo_out[1] = buzzer_out;
-assign uo_out[7:2] = 6'b0;
+assign uo_out[7:2] = 6'b0;   // REQUIRED
 
+// Unused IOs (REQUIRED for TT)
 assign uio_out = 8'b0;
 assign uio_oe  = 8'b0;
 
