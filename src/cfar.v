@@ -1,4 +1,6 @@
+`timescale 1ns/1ps
 `default_nettype none
+
 module cfar (
     input              clk,
     input              rst,
@@ -7,17 +9,16 @@ module cfar (
     output reg         detect
 );
 
-// Shift register
+// ─────────────────────────
+// 3-stage shift register
+// ─────────────────────────
 reg [7:0] w0, w1, w2;
 
-// Use wires for combinational intermediate values
-// so the detect comparison uses fresh data in the same cycle
-wire [9:0] sum_comb  = w0 + w2;
-wire [7:0] avg_comb  = sum_comb[9:1];   // divide by 2, no truncation
-wire [7:0] cut_comb  = w1;              // CUT is always current w1
+// Detection hold counter
+reg [3:0] detect_hold;
 
 // ─────────────────────────
-// Shift register (3-stage)
+// Shift logic
 // ─────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
@@ -32,14 +33,37 @@ always @(posedge clk or posedge rst) begin
 end
 
 // ─────────────────────────
-// Detection
+// Combinational CFAR signals
+// ─────────────────────────
+wire [9:0] sum_comb = w0 + w2;        // training cells
+wire [7:0] avg_comb = sum_comb[9:1];  // divide by 2
+wire [7:0] cut_comb = w1;             // CUT (center)
+
+// ─────────────────────────
+// Detection with HOLD (critical fix)
 // ─────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
         detect <= 1'b0;
+        detect_hold <= 4'd0;
     end else if (valid_in) begin
-        // cut_comb and avg_comb are wires — no pipeline lag
-        detect <= (cut_comb > (avg_comb + 8'd4));
+
+        // Trigger detection
+        if (cut_comb > (avg_comb + 8'd2)) begin
+            detect <= 1'b1;
+            detect_hold <= 4'd10;   // hold for 10 cycles
+        end 
+
+        // Hold detection (prevents missing pulse in GL)
+        else if (detect_hold != 0) begin
+            detect_hold <= detect_hold - 1;
+            detect <= 1'b1;
+        end 
+
+        // No detection
+        else begin
+            detect <= 1'b0;
+        end
     end
 end
 
