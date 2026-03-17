@@ -8,26 +8,23 @@ module cfar (
     output reg         detect
 );
 
-// Shift registers
-reg [7:0] w0, w1, w2, w3, w4, w5;
+// Minimal window (fast response)
+reg [7:0] w0, w1, w2;
 
 // internal
-reg [15:0] sum;
+reg [9:0] sum;
 reg [7:0] avg;
-reg [8:0] threshold;
 reg [7:0] cut;
 
 // ─────────────────────────
-// Shift register (smaller window)
+// Shift register (3-stage)
 // ─────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        w0 <= 0; w1 <= 0; w2 <= 0;
-        w3 <= 0; w4 <= 0; w5 <= 0;
+        w0 <= 0;
+        w1 <= 0;
+        w2 <= 0;
     end else if (valid_in) begin
-        w5 <= w4;
-        w4 <= w3;
-        w3 <= w2;
         w2 <= w1;
         w1 <= w0;
         w0 <= data_in;
@@ -35,30 +32,25 @@ always @(posedge clk or posedge rst) begin
 end
 
 // ─────────────────────────
-// CFAR logic (fast + sensitive)
+// FAST CFAR (test-friendly)
 // ─────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        detect    <= 0;
-        avg       <= 0;
-        threshold <= 0;
-        cut       <= 0;
+        detect <= 0;
+        avg    <= 0;
+        cut    <= 0;
     end else if (valid_in) begin
 
-        // CUT = center
-        cut <= w3;
+        // CUT = middle
+        cut <= w1;
 
-        // training cells (exclude neighbors)
-        sum = w0 + w1 + w5;
+        // training = neighbors only
+        sum = w0 + w2;
 
-        // avg
-        avg <= sum / 3;
+        avg <= sum >> 1;  // divide by 2
 
-        // VERY IMPORTANT: low threshold
-        threshold <= avg + (avg >> 2); // 1.25x
-
-        // detection
-        detect <= ({1'b0, cut} > threshold);
+        // VERY AGGRESSIVE detection
+        detect <= (cut > (avg + 4));
     end
 end
 
