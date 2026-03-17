@@ -1,31 +1,28 @@
 `default_nettype none
 `default_nettype wire
 
-
 module buzzer (
-input  wire clk,
-input  wire rst,
-input  wire detect,
-output reg  buzzer_out
+    input  wire clk,
+    input  wire rst_n,
+    input  wire trigger,
+    output reg  out
 );
-
 
 reg [11:0] counter;
 
-always @(posedge clk) begin
-    if (rst) begin
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
         counter <= 0;
-        buzzer_out <= 0;
+        out <= 0;
     end else begin
-        if (detect)
+        if (trigger)
             counter <= 12'd2000;
         else if (counter > 0)
             counter <= counter - 1;
 
-        buzzer_out <= (counter > 0);
+        out <= (counter != 0);
     end
 end
-
 
 endmodule
 
