@@ -8,41 +8,48 @@ module cfar (
     output reg         detect
 );
 
-parameter N = 8;
-parameter CUT_INDEX = 4;
+// ─────────────────────────────────────────
+// Shift register (manual, no arrays)
+// ─────────────────────────────────────────
+reg [7:0] w0, w1, w2, w3, w4, w5, w6, w7;
 
-reg [7:0] window [0:N-1];
-integer i;
-
-// Proper widths
-reg [15:0] sum;
-reg [7:0] avg;
-reg [8:0] threshold;
+// CUT (center cell)
 reg [7:0] cut;
 
-// ── Shift register ─────────────────────────
+// CFAR internal signals
+reg [15:0] sum;
+reg [7:0]  avg;
+reg [8:0]  threshold;
+
+// ─────────────────────────────────────────
+// Shift logic
+// ─────────────────────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        for (i = 0; i < N; i = i + 1)
-            window[i] <= 0;
+        w0 <= 0; w1 <= 0; w2 <= 0; w3 <= 0;
+        w4 <= 0; w5 <= 0; w6 <= 0; w7 <= 0;
     end else if (valid_in) begin
-        for (i = N-1; i > 0; i = i - 1)
-            window[i] <= window[i-1];
-
-        window[0] <= data_in;
+        w7 <= w6;
+        w6 <= w5;
+        w5 <= w4;
+        w4 <= w3;
+        w3 <= w2;
+        w2 <= w1;
+        w1 <= w0;
+        w0 <= data_in;
     end
 end
 
-// ── Combinational sum (FIXED) ─────────────
+// ─────────────────────────────────────────
+// Combinational sum (exclude CUT = w4)
+// ─────────────────────────────────────────
 always @(*) begin
-    sum = 0;
-    for (i = 0; i < N; i = i + 1) begin
-        if (i != CUT_INDEX)
-            sum = sum + window[i];
-    end
+    sum = w0 + w1 + w2 + w3 + w5 + w6 + w7;
 end
 
-// ── Sequential logic ──────────────────────
+// ─────────────────────────────────────────
+// CFAR logic
+// ─────────────────────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
         avg       <= 0;
@@ -51,15 +58,16 @@ always @(posedge clk or posedge rst) begin
         cut       <= 0;
     end else if (valid_in) begin
 
-        cut <= window[CUT_INDEX];
+        // Select CUT (center of window)
+        cut <= w4;
 
-        // FIXED width handling
-        avg <= sum[15:3];  // instead of sum >> 3
+        // Average (divide by 8 → shift)
+        avg <= sum[15:3];
 
-        // FIXED width match
+        // Threshold = 1.5 × avg
         threshold <= {1'b0, avg} + ({1'b0, avg} >> 1);
 
-        // FIXED comparison width
+        // Detection
         detect <= ({1'b0, cut} > threshold);
     end
 end
