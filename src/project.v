@@ -1,21 +1,23 @@
+`default_nettype none
+`default_nettype wire
 module tt_um_ttsky_cfar (
-input  wire [7:0] ui_in,
-output wire [7:0] uo_out,
-input  wire [7:0] uio_in,
-output wire [7:0] uio_out,
-output wire [7:0] uio_oe,
-input  wire clk,
-input  wire rst_n,
-input  wire ena
+    input  wire [7:0] ui_in,
+    output wire [7:0] uo_out,
+    input  wire [7:0] uio_in,
+    output wire [7:0] uio_out,
+    output wire [7:0] uio_oe,
+    input  wire clk,
+    input  wire rst_n,
+    input  wire ena
 );
 
 wire detect;
 
 cfar cfar_inst (
-.clk(clk),
-.rst_n(rst_n),
-.sample_in(ui_in),
-.detect(detect)
+    .clk(clk),
+    .rst_n(rst_n),
+    .sample_in(ui_in),
+    .detect(detect)
 );
 
 assign uo_out[0] = detect;
@@ -25,3 +27,4 @@ assign uio_out = 8'b0;
 assign uio_oe  = 8'b0;
 
 endmodule
+
