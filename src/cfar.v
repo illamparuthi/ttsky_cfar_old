@@ -1,43 +1,56 @@
-`default_nettype none
-`default_nettype wire
+`timescale 1ns / 1ps
 
 module cfar (
-    input  wire clk,
-    input  wire rst_n,
-    input  wire [7:0] sample_in,
-    output reg detect
+    input              clk,
+    input              rst,
+    input      [7:0]   data_in,
+    input              valid_in,
+    output reg         detect
 );
 
-reg [7:0] window [0:10];
+// ── Parameters ─────────────────────────────
+parameter N = 8;  // number of reference cells
+
+// ── Registers (ALL declared at module level) ─────────────────────
+reg [7:0] window [0:N-1];
+reg [15:0] sum;
+reg [7:0] avg;
+reg [8:0] threshold;
+
 integer i;
 
-always @(posedge clk) begin
-    if (!rst_n) begin
-        for (i = 0; i < 11; i = i + 1)
+// ── CFAR Logic ────────────────────────────
+always @(posedge clk or posedge rst) begin
+    if (rst) begin
+        sum       <= 0;
+        avg       <= 0;
+        threshold <= 0;
+        detect    <= 0;
+
+        for (i = 0; i < N; i = i + 1)
             window[i] <= 0;
-        detect <= 0;
-    end else begin
-        for (i = 10; i > 0; i = i - 1)
+
+    end else if (valid_in) begin
+
+        // Shift window
+        for (i = N-1; i > 0; i = i - 1)
             window[i] <= window[i-1];
 
-        window[0] <= sample_in;
+        window[0] <= data_in;
 
-        // compute
-        // CUT = window[5]
-        // training cells = 0-3 and 7-10
+        // Compute sum
+        sum = 0;
+        for (i = 0; i < N; i = i + 1)
+            sum = sum + window[i];
 
-        reg [15:0] sum;
-        sum = window[0] + window[1] + window[2] + window[3] +
-              window[7] + window[8] + window[9] + window[10];
+        // Average
+        avg = sum / N;
 
-        reg [7:0] avg;
-        avg = sum >> 3;
+        // Threshold (simple scaling)
+        threshold = avg + (avg >> 1); // 1.5x
 
-        reg [8:0] threshold;
-        threshold = avg << 1;
-
-        // IMPORTANT: relaxed threshold (fix for GL fail)
-        if (window[5] > (threshold >> 1))
+        // Detection
+        if (data_in > threshold)
             detect <= 1;
         else
             detect <= 0;
@@ -45,4 +58,3 @@ always @(posedge clk) begin
 end
 
 endmodule
-
