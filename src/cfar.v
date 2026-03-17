@@ -1,5 +1,4 @@
 `default_nettype none
-
 module cfar (
     input              clk,
     input              rst,
@@ -8,22 +7,23 @@ module cfar (
     output reg         detect
 );
 
-// Minimal window (fast response)
+// Shift register
 reg [7:0] w0, w1, w2;
 
-// internal
-reg [9:0] sum;
-reg [7:0] avg;
-reg [7:0] cut;
+// Use wires for combinational intermediate values
+// so the detect comparison uses fresh data in the same cycle
+wire [9:0] sum_comb  = w0 + w2;
+wire [7:0] avg_comb  = sum_comb[9:1];   // divide by 2, no truncation
+wire [7:0] cut_comb  = w1;              // CUT is always current w1
 
 // ─────────────────────────
 // Shift register (3-stage)
 // ─────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        w0 <= 0;
-        w1 <= 0;
-        w2 <= 0;
+        w0 <= 8'd0;
+        w1 <= 8'd0;
+        w2 <= 8'd0;
     end else if (valid_in) begin
         w2 <= w1;
         w1 <= w0;
@@ -32,25 +32,14 @@ always @(posedge clk or posedge rst) begin
 end
 
 // ─────────────────────────
-// FAST CFAR (test-friendly)
+// Detection
 // ─────────────────────────
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        detect <= 0;
-        avg    <= 0;
-        cut    <= 0;
+        detect <= 1'b0;
     end else if (valid_in) begin
-
-        // CUT = middle
-        cut <= w1;
-
-        // training = neighbors only
-        sum = w0 + w2;
-
-        avg <= sum >> 1;  // divide by 2
-
-        // VERY AGGRESSIVE detection
-        detect <= (cut > (avg + 4));
+        // cut_comb and avg_comb are wires — no pipeline lag
+        detect <= (cut_comb > (avg_comb + 8'd4));
     end
 end
 
