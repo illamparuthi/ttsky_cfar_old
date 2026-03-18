@@ -1,4 +1,4 @@
-module ttsky_cfar_old (
+module tt_um_ilamparuthi_cfar (
     input  [7:0] ui_in,    // Dedicated inputs
     output [7:0] uo_out,   // Dedicated outputs
     input  [7:0] uio_in,   // IOs: Input path
