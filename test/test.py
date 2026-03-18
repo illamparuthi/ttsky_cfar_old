@@ -2,7 +2,6 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 
-
 @cocotb.test()
 async def test_cfar_detection(dut):
 
@@ -15,11 +14,20 @@ async def test_cfar_detection(dut):
     cocotb.start_soon(clock.start())
 
     # -------------------------------
-    # Reset
+    # Reset & Power Initialization
     # -------------------------------
     dut.ui_in.value = 0
     dut.uio_in.value = 0
     dut.rst_n.value = 0
+    dut.ena.value = 1      # KEY FIX: Enable the chip
+
+    # Supply power for Gate Level Simulations
+    if hasattr(dut, "VPWR"):
+        dut.VPWR.value = 1
+        dut.VGND.value = 0
+    elif hasattr(dut, "vccd1"): # Tiny Tapeout specific power pins
+        dut.vccd1.value = 1
+        dut.vssd1.value = 0
 
     for _ in range(5):
         await RisingEdge(dut.clk)
