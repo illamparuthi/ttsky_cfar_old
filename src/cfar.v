@@ -1,56 +1,79 @@
 `default_nettype none
-
-module cfar_detector (
-    input  wire       clk,
-    input  wire       rst_n,
-    input  wire [7:0] sample,
-    output reg        detect
+module tt_um_cfar (
+    input  [7:0] ui_in,   // input data stream
+    output [7:0] uo_out,  // outputs (use bit 0 for detect)
+    input clk,
+    input rst_n
 );
 
-reg [7:0] w0,w1,w2,w3,w4,w5,w6,w7,w8,w9,w10;
+wire rst = ~rst_n;
 
-// Shift register
-always @(posedge clk or negedge rst_n) begin
-    if(!rst_n) begin
-        w0<=0; w1<=0; w2<=0; w3<=0; w4<=0;
-        w5<=0; w6<=0; w7<=0; w8<=0; w9<=0; w10<=0;
+// -------------------------------
+// Sliding Window (no arrays)
+// -------------------------------
+reg [7:0] w0, w1, w2, w3, w4, w5, w6, w7;
+
+always @(posedge clk or posedge rst) begin
+    if (rst) begin
+        w0<=0; w1<=0; w2<=0; w3<=0;
+        w4<=0; w5<=0; w6<=0; w7<=0;
     end else begin
-        w10 <= w9;
-        w9  <= w8;
-        w8  <= w7;
-        w7  <= w6;
-        w6  <= w5;
-        w5  <= w4;
-        w4  <= w3;
-        w3  <= w2;
-        w2  <= w1;
-        w1  <= w0;
-        w0  <= sample;
+        w7 <= w6;
+        w6 <= w5;
+        w5 <= w4;
+        w4 <= w3;
+        w3 <= w2;
+        w2 <= w1;
+        w1 <= w0;
+        w0 <= ui_in;
     end
 end
 
-// Training cells sum
-wire [10:0] sum =
-      w0 + w1 + w2 + w3 +
-      w7 + w8 + w9 + w10;
+// -------------------------------
+// CFAR Structure
+// [T T T G C G T T]
+// -------------------------------
 
-// Average
-wire [7:0] avg = sum >> 3;
+// CUT
+wire [7:0] cut = w4;
 
-// Threshold
-wire [7:0] threshold = avg << 1;
+// Training cells (exclude guards w3, w5)
+wire [10:0] sum = w0 + w1 + w2 + w6 + w7;
 
-// Comparator (registered output)
-reg [7:0] threshold_reg;
+// -------------------------------
+// Approximate division by 5
+// noise ≈ (sum * 51) >> 8
+// -------------------------------
+wire [15:0] mult = sum * 8'd51;
+wire [7:0] noise = mult >> 8;
 
-always @(posedge clk or negedge rst_n) begin
-    if(!rst_n) begin
-        threshold_reg <= 0;
-        detect <= 0;
+// Threshold (k = 4)
+wire [7:0] threshold = noise << 2;
+
+// -------------------------------
+// Pipeline registers
+// -------------------------------
+reg [7:0] cut_r, thr_r;
+reg detect_r;
+
+always @(posedge clk or posedge rst) begin
+    if (rst) begin
+        cut_r <= 0;
+        thr_r <= 0;
+        detect_r <= 0;
     end else begin
-        threshold_reg <= threshold;   // register threshold
-        detect <= (w5 > threshold_reg); // compare with stable value
+        cut_r <= cut;
+        thr_r <= threshold;
+        detect_r <= (cut_r > thr_r);
     end
 end
+
+// -------------------------------
+// Outputs
+// -------------------------------
+assign uo_out[0] = detect_r; // detection output
+assign uo_out[7:1] = 7'b0;
 
 endmodule
+
+
