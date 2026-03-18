@@ -37,7 +37,7 @@ wire [10:0] sum = w0 + w1 + w2 + w6 + w7;
 wire [15:0] mult = sum * 8'd51;
 wire [7:0] noise = mult >> 8;
 
-wire [7:0] threshold = noise << 2;
+wire [7:0] threshold = noise + (noise >> 1);  // k ≈ 1.5
 
 // pipeline
 reg [7:0] cut_r, thr_r;
