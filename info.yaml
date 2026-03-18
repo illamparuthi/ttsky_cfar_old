@@ -1,13 +1,13 @@
 project:
   title: "CFAR Radar Detector"
   author: "Illamparuthi"
-  description: "CA-CFAR radar detector using adaptive threshold for real-time target detection"
+  description: "Low-area CA-CFAR hardware accelerator for adaptive radar target detection using sliding window noise estimation"
   language: "Verilog"
   clock_hz: 10000000
 
-  tiles: 1x1
+  tiles: "1x1"
 
-top_module: "tt_um_ilamparuthi_cfar"
+  top_module: "tt_um_ilamparuthi_cfar"
 
   source_files:
     - "project.v"
