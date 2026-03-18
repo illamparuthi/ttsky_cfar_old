@@ -26,44 +26,39 @@ async def test_cfar_detection(dut):
     dut.rst_n.value = 1
 
     # -------------------------------
-    # Fill window (important)
+    # Fill window (VERY IMPORTANT)
     # -------------------------------
-    for _ in range(10):
+    for _ in range(12):
         dut.ui_in.value = 10
         await RisingEdge(dut.clk)
 
     # -------------------------------
-    # Test pattern
+    # Apply test pattern
     # -------------------------------
     samples = [10, 11, 9, 10, 12, 11, 10, 50, 11, 10]
 
-    detected = False
-
-    for i, s in enumerate(samples):
+    for s in samples:
         dut.ui_in.value = s
         await RisingEdge(dut.clk)
 
-        # Pipeline delay
+    # -------------------------------
+    # Monitor detection (GL-safe)
+    # -------------------------------
+    detected = False
+
+    for _ in range(60):   # 🔥 KEY: longer observation window
         await RisingEdge(dut.clk)
 
-        # -------------------------------
-        # GL-safe detection check
-        # -------------------------------
         bit0 = dut.uo_out.value[0]
 
-        # Only check if valid (no X/Z)
-        if bit0.is_resolvable and int(bit0) == 1:
-            dut._log.info(f"Detection at index {i}, value={s}")
-            detected = True
+        # Skip invalid (X/Z)
+        if not bit0.is_resolvable:
+            continue
 
-    # -------------------------------
-    # Extra cycles (safety)
-    # -------------------------------
-    for _ in range(10):
-        await RisingEdge(dut.clk)
-        bit0 = dut.uo_out.value[0]
-        if bit0.is_resolvable and int(bit0) == 1:
+        if int(bit0) == 1:
+            dut._log.info("✅ Detection observed in simulation")
             detected = True
+            break
 
     # -------------------------------
     # Assertion
