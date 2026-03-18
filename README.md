@@ -16,7 +16,8 @@ This architecture can be used in:
 - Object detection systems
 - Embedded sensing devices
 
----
+
+
 
 ## CFAR Detection Concept
 
