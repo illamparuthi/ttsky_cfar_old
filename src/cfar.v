@@ -73,6 +73,6 @@ end
 // -------------------------------
 // Output
 // -------------------------------
-assign detect = detect_r;
+detect_r <= (cut_r > (thr_r - 8'd5));
 
 endmodule
