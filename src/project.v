@@ -19,12 +19,12 @@ module tt_um_ilamparuthi_cfar (
     // -------------------------------
     // CFAR Core Instance
     // -------------------------------
-    cfar_core core (
-        .clk(clk),
-        .rst_n(rst_n),
-        .data_in(ui_in),
-        .detect(detect)
-    );
+   cfar_core core (
+    .clk(clk),
+    .rst_n(rst_n & ena),   // KEY FIX
+    .data_in(ui_in),
+    .detect(detect)
+);
 
     // -------------------------------
     // Output mapping
