@@ -1,44 +1,44 @@
 project:
-  title:        "CFAR Radar Detector"
-  author:       "Illamparuthi"
-  description:  "CA-CFAR radar detector using adaptive threshold"
-  language:     "Verilog"
-  clock_hz:     10000000
+  title: "CFAR Radar Detector"
+  author: "Illamparuthi"
+  description: "CA-CFAR radar detector using adaptive threshold for real-time target detection"
+  language: "Verilog"
+  clock_hz: 10000000
 
-  tiles: "1x1"
+  tiles: 1x1
 
-  top_module: "tt_um_ttsky_cfar"
+  top_module: "ttsky_cfar_old"
 
   source_files:
     - "project.v"
     - "cfar.v"
 
 pinout:
-  ui[0]: "Radar sample bit0"
-  ui[1]: "Radar sample bit1"
-  ui[2]: "Radar sample bit2"
-  ui[3]: "Radar sample bit3"
-  ui[4]: "Radar sample bit4"
-  ui[5]: "Radar sample bit5"
-  ui[6]: "Radar sample bit6"
-  ui[7]: "Radar sample bit7"
+  ui[0]: "Radar sample bit 0"
+  ui[1]: "Radar sample bit 1"
+  ui[2]: "Radar sample bit 2"
+  ui[3]: "Radar sample bit 3"
+  ui[4]: "Radar sample bit 4"
+  ui[5]: "Radar sample bit 5"
+  ui[6]: "Radar sample bit 6"
+  ui[7]: "Radar sample bit 7"
 
   uo[0]: "CFAR detection output"
-  uo[1]: "unused"
-  uo[2]: "unused"
-  uo[3]: "unused"
-  uo[4]: "unused"
-  uo[5]: "unused"
-  uo[6]: "unused"
-  uo[7]: "unused"
+  uo[1]: "Unused"
+  uo[2]: "Unused"
+  uo[3]: "Unused"
+  uo[4]: "Unused"
+  uo[5]: "Unused"
+  uo[6]: "Unused"
+  uo[7]: "Unused"
 
-  uio[0]: "unused"
-  uio[1]: "unused"
-  uio[2]: "unused"
-  uio[3]: "unused"
-  uio[4]: "unused"
-  uio[5]: "unused"
-  uio[6]: "unused"
-  uio[7]: "unused"
+  uio[0]: "Unused"
+  uio[1]: "Unused"
+  uio[2]: "Unused"
+  uio[3]: "Unused"
+  uio[4]: "Unused"
+  uio[5]: "Unused"
+  uio[6]: "Unused"
+  uio[7]: "Unused"
 
 yaml_version: 6
