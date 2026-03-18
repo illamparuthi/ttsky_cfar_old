@@ -6,15 +6,11 @@ from cocotb.triggers import RisingEdge
 @cocotb.test()
 async def test_cfar_detection(dut):
 
-    # -------------------------------
     # Clock
-    # -------------------------------
     clock = Clock(dut.clk, 10, unit="ns")
     cocotb.start_soon(clock.start())
 
-    # -------------------------------
     # Init
-    # -------------------------------
     dut.ui_in.value = 0
     dut.uio_in.value = 0
     dut.rst_n.value = 0
@@ -25,16 +21,12 @@ async def test_cfar_detection(dut):
 
     dut.rst_n.value = 1
 
-    # -------------------------------
-    # Fill window (IMPORTANT)
-    # -------------------------------
-    for _ in range(10):  # fill shift register
+    # Fill window
+    for _ in range(10):
         dut.ui_in.value = 10
         await RisingEdge(dut.clk)
 
-    # -------------------------------
-    # Apply test pattern
-    # -------------------------------
+    # Test pattern
     samples = [10, 11, 9, 10, 12, 11, 10, 50, 11, 10]
 
     detected = False
@@ -43,25 +35,20 @@ async def test_cfar_detection(dut):
         dut.ui_in.value = s
         await RisingEdge(dut.clk)
 
-        # Wait 1 cycle for pipeline alignment
+        # pipeline delay
         await RisingEdge(dut.clk)
 
-        # Check detection
-        if dut.uo_out.value & 0x1:
-            dut._log.info(f"Detection at sample index {i}, value={s}")
+        # FIX: convert to int
+        if int(dut.uo_out.value) & 0x1:
+            dut._log.info(f"Detection at index {i}, value={s}")
             detected = True
 
-    # -------------------------------
-    # Extra cycles (safety)
-    # -------------------------------
+    # extra cycles
     for _ in range(10):
         await RisingEdge(dut.clk)
-        if dut.uo_out.value & 0x1:
+        if int(dut.uo_out.value) & 0x1:
             detected = True
 
-    # -------------------------------
-    # Assertion
-    # -------------------------------
-    assert detected, "❌ CFAR detector failed to detect target"
+    assert detected, "❌ CFAR detector failed"
 
     dut._log.info("✅ CFAR detection PASSED")
