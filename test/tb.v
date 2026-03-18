@@ -10,15 +10,16 @@ wire [7:0] uo_out;
 wire [7:0] uio_out;
 wire [7:0] uio_oe;
 
-// DUT
-ttsky_cfar_old dut (
+// DUT instantiation updated to match project.v
+tt_um_ilamparuthi_cfar dut (
     .ui_in(ui_in),
     .uo_out(uo_out),
     .uio_in(8'b0),   // not used
     .uio_out(uio_out),
     .uio_oe(uio_oe),
     .clk(clk),
-    .rst_n(~rst)
+    .rst_n(~rst),
+    .ena(1'b1)       // KEY FIX: Drive enable high
 );
 
 // Clock generation (10ns period)
