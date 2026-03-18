@@ -4,6 +4,7 @@ module tt_um_ilamparuthi_cfar (
     input  [7:0] uio_in,   // IOs: Input path
     output [7:0] uio_out,  // IOs: Output path
     output [7:0] uio_oe,   // IOs: Output enable
+    input ena,
     input clk,             // Clock
     input rst_n            // Active low reset
 );
