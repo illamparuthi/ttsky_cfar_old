@@ -10,7 +10,7 @@ module cfar_core (
 wire rst = ~rst_n;
 
 // -------------------------------
-// Sliding Window (8 samples)
+// Sliding Window
 // -------------------------------
 reg [7:0] w0, w1, w2, w3, w4, w5, w6, w7;
 
@@ -31,52 +31,40 @@ always @(posedge clk or posedge rst) begin
 end
 
 // -------------------------------
-// CFAR structure
-// [T T T G C G T T]
+// CUT and Training cells
 // -------------------------------
-
-// CUT
 wire [7:0] cut = w4;
 
-// Training cells (exclude guards)
-wire [10:0] sum = w0 + w1 + w2 + w6 + w7;
+// use fewer training cells → stronger detection
+wire [10:0] sum = w0 + w1 + w6 + w7;
 
 // -------------------------------
-// Noise estimate (GL-safe)
+// GL-safe noise estimate
 // -------------------------------
-wire [7:0] noise = sum / 5;
+wire [7:0] noise = sum >> 2;   // divide by 4 (no division hardware)
 
 // -------------------------------
-// Threshold (stable)
+// Lower threshold
 // -------------------------------
-wire [7:0] threshold = noise + 8'd10;
+wire [7:0] threshold = noise + 8'd5;
 
 // -------------------------------
-// Pipeline + Detection (FIXED)
+// Pipeline + Detection
 // -------------------------------
-reg [7:0] cut_r, thr_r;
 reg detect_r;
 
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        cut_r <= 0;
-        thr_r <= 0;
         detect_r <= 0;
     end else begin
-        cut_r <= cut;
-        thr_r <= threshold;
-
-        // ✅ GL-safe detection with margin
-        if (cut_r > (thr_r - 8'd5))
+        // direct comparison (no extra pipeline delay)
+        if (cut > threshold)
             detect_r <= 1'b1;
         else
             detect_r <= 1'b0;
     end
 end
 
-// -------------------------------
-// Output
-// -------------------------------
 assign detect = detect_r;
 
 endmodule
