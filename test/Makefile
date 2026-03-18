@@ -17,7 +17,7 @@ SIM_BUILD = sim_build/rtl
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 
 # MUST match your project.v module name
-TOPLEVEL = ttsky_cfar_old
+TOPLEVEL = tt_um_ilamparuthi_cfar
 
 else
 
