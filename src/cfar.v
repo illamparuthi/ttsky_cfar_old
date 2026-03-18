@@ -1,4 +1,5 @@
 `default_nettype none
+
 module cfar_core (
     input clk,
     input rst_n,
@@ -8,9 +9,7 @@ module cfar_core (
 
 wire rst = ~rst_n;
 
-// -------------------------------
-// Sliding Window (no arrays)
-// -------------------------------
+// Sliding window
 reg [7:0] w0, w1, w2, w3, w4, w5, w6, w7;
 
 always @(posedge clk or posedge rst) begin
@@ -25,34 +24,22 @@ always @(posedge clk or posedge rst) begin
         w3 <= w2;
         w2 <= w1;
         w1 <= w0;
-        w0 <= ui_in;
+        w0 <= data_in;   // ✅ FIXED
     end
 end
 
-// -------------------------------
-// CFAR Structure
-// [T T T G C G T T]
-// -------------------------------
-
-// CUT
+// CFAR logic
 wire [7:0] cut = w4;
 
-// Training cells (exclude guards w3, w5)
 wire [10:0] sum = w0 + w1 + w2 + w6 + w7;
 
-// -------------------------------
-// Approximate division by 5
-// noise ≈ (sum * 51) >> 8
-// -------------------------------
+// divide by 5 approximation
 wire [15:0] mult = sum * 8'd51;
 wire [7:0] noise = mult >> 8;
 
-// Threshold (k = 4)
 wire [7:0] threshold = noise << 2;
 
-// -------------------------------
-// Pipeline registers
-// -------------------------------
+// pipeline
 reg [7:0] cut_r, thr_r;
 reg detect_r;
 
@@ -68,12 +55,6 @@ always @(posedge clk or posedge rst) begin
     end
 end
 
-// -------------------------------
-// Outputs
-// -------------------------------
-assign uo_out[0] = detect_r; // detection output
-assign uo_out[7:1] = 7'b0;
+assign detect = detect_r;  // ✅ ONLY output
 
 endmodule
-
-
