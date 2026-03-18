@@ -42,18 +42,17 @@ wire [7:0] cut = w4;
 wire [10:0] sum = w0 + w1 + w2 + w6 + w7;
 
 // -------------------------------
-// SAFE noise estimate (NO MULTIPLY)
-// noise ≈ sum / 5
+// Noise estimate (GL-safe)
 // -------------------------------
 wire [7:0] noise = sum / 5;
 
 // -------------------------------
-// STABLE threshold (GL-safe)
+// Threshold (stable)
 // -------------------------------
 wire [7:0] threshold = noise + 8'd10;
 
 // -------------------------------
-// Pipeline
+// Pipeline + Detection (FIXED)
 // -------------------------------
 reg [7:0] cut_r, thr_r;
 reg detect_r;
@@ -66,13 +65,18 @@ always @(posedge clk or posedge rst) begin
     end else begin
         cut_r <= cut;
         thr_r <= threshold;
-        detect_r <= (cut_r > thr_r);
+
+        // ✅ GL-safe detection with margin
+        if (cut_r > (thr_r - 8'd5))
+            detect_r <= 1'b1;
+        else
+            detect_r <= 1'b0;
     end
 end
 
 // -------------------------------
 // Output
 // -------------------------------
-detect_r <= (cut_r > (thr_r - 8'd5));
+assign detect = detect_r;
 
 endmodule
