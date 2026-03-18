@@ -36,7 +36,7 @@ VERILOG_SOURCES += $(PDK_ROOT)/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_f
 # Gate-level netlist
 VERILOG_SOURCES += $(PWD)/gate_level_netlist.v
 
-TOPLEVEL = ttsky_cfar_old
+TOPLEVEL = tt_um_ilamparuthi_cfar
 
 endif
 
