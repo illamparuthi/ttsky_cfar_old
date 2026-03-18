@@ -4,33 +4,64 @@ from cocotb.triggers import RisingEdge
 
 
 @cocotb.test()
-async def test_project(dut):
+async def test_cfar_detection(dut):
 
+    # -------------------------------
+    # Clock
+    # -------------------------------
     clock = Clock(dut.clk, 10, unit="ns")
     cocotb.start_soon(clock.start())
 
-    dut.ena.value = 1
+    # -------------------------------
+    # Init
+    # -------------------------------
     dut.ui_in.value = 0
     dut.uio_in.value = 0
-
     dut.rst_n.value = 0
+
+    # Reset
     for _ in range(5):
         await RisingEdge(dut.clk)
 
     dut.rst_n.value = 1
 
-    samples = [10,11,9,10,12,11,10,200,11,10]
+    # -------------------------------
+    # Fill window (IMPORTANT)
+    # -------------------------------
+    for _ in range(10):  # fill shift register
+        dut.ui_in.value = 10
+        await RisingEdge(dut.clk)
+
+    # -------------------------------
+    # Apply test pattern
+    # -------------------------------
+    samples = [10, 11, 9, 10, 12, 11, 10, 50, 11, 10]
 
     detected = False
 
-    for s in samples:
+    for i, s in enumerate(samples):
         dut.ui_in.value = s
         await RisingEdge(dut.clk)
 
-    # wait pipeline
-    for _ in range(20):
+        # Wait 1 cycle for pipeline alignment
         await RisingEdge(dut.clk)
-        if dut.uo_out.value[0] == 1:
+
+        # Check detection
+        if dut.uo_out.value & 0x1:
+            dut._log.info(f"Detection at sample index {i}, value={s}")
             detected = True
 
-    assert detected, "CFAR detector failed to detect target"
+    # -------------------------------
+    # Extra cycles (safety)
+    # -------------------------------
+    for _ in range(10):
+        await RisingEdge(dut.clk)
+        if dut.uo_out.value & 0x1:
+            detected = True
+
+    # -------------------------------
+    # Assertion
+    # -------------------------------
+    assert detected, "❌ CFAR detector failed to detect target"
+
+    dut._log.info("✅ CFAR detection PASSED")
