@@ -1,15 +1,17 @@
 `default_nettype none
 
 module cfar_core (
-    input clk,
-    input rst_n,
-    input [7:0] data_in,
-    output detect
+    input        clk,
+    input        rst_n,
+    input  [7:0] data_in,
+    output       detect
 );
 
 wire rst = ~rst_n;
 
-// Sliding window
+// -------------------------------
+// Sliding Window (8 samples)
+// -------------------------------
 reg [7:0] w0, w1, w2, w3, w4, w5, w6, w7;
 
 always @(posedge clk or posedge rst) begin
@@ -24,22 +26,35 @@ always @(posedge clk or posedge rst) begin
         w3 <= w2;
         w2 <= w1;
         w1 <= w0;
-        w0 <= data_in;   // ✅ FIXED
+        w0 <= data_in;
     end
 end
 
-// CFAR logic
+// -------------------------------
+// CFAR structure
+// [T T T G C G T T]
+// -------------------------------
+
+// CUT
 wire [7:0] cut = w4;
 
+// Training cells (exclude guards)
 wire [10:0] sum = w0 + w1 + w2 + w6 + w7;
 
-// divide by 5 approximation
-wire [15:0] mult = sum * 8'd51;
-wire [7:0] noise = mult >> 8;
+// -------------------------------
+// SAFE noise estimate (NO MULTIPLY)
+// noise ≈ sum / 5
+// -------------------------------
+wire [7:0] noise = sum / 5;
 
-wire [7:0] threshold = noise + (noise >> 1);  // k ≈ 1.5
+// -------------------------------
+// STABLE threshold (GL-safe)
+// -------------------------------
+wire [7:0] threshold = noise + 8'd10;
 
-// pipeline
+// -------------------------------
+// Pipeline
+// -------------------------------
 reg [7:0] cut_r, thr_r;
 reg detect_r;
 
@@ -55,6 +70,9 @@ always @(posedge clk or posedge rst) begin
     end
 end
 
-assign detect = detect_r;  // ✅ ONLY output
+// -------------------------------
+// Output
+// -------------------------------
+assign detect = detect_r;
 
 endmodule
