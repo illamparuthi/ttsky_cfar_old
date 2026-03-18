@@ -1,9 +1,9 @@
 `default_nettype none
-module tt_um_cfar (
-    input  [7:0] ui_in,   // input data stream
-    output [7:0] uo_out,  // outputs (use bit 0 for detect)
+module cfar_core (
     input clk,
-    input rst_n
+    input rst_n,
+    input [7:0] data_in,
+    output detect
 );
 
 wire rst = ~rst_n;
